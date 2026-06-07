@@ -278,7 +278,7 @@ test.describe.serial('Test cases W/O TC2,TC5 flow', () => {
         const suggestionsResponsePromise = page.waitForResponse(
             response => response.url().includes('/api/location-suggestions'),
             { timeout: 10000 }
-        ).catch(() => null);
+        );
 
         await pickUpLocation.click();
         await pickUpLocation.fill(expectedLocation);
