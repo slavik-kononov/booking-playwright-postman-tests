@@ -81,7 +81,7 @@ test.describe('TC2 flow', () => {
         if (statusCode === 405) {
             await expect(humanVerification,'Human Verification title should be visible').toBeVisible();
             await expect(page.getByRole('button', { name: /Begin/i }), 'Begin button should be visible').toBeVisible();
-            console.log('⚠️ Human Verification page opened with 405 response code');
+            throw new Error('⚠️ Human Verification page opened with 405 response code');
             return;
         }
 

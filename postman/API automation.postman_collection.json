@@ -1,0 +1,552 @@
+{
+  "info": {
+    "_postman_id": "02ada2b3-ed63-4e55-a156-3ad9099dace2",
+    "name": "API automation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10626040"
+  },
+  "item": [
+    {
+      "name": "Create Object",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "let min = 1;\r",
+              "let max = 100000;\r",
+              "let randomNum = Math.floor(Math.random() * (max - min + 1)) + min;\r",
+              "\r",
+              "const colors = [\"Gray\", \"Red\", \"Blue\", \"Green\", \"Yellow\", \"Black\", \"White\", \"Purple\", \"Orange\", \"Pink\"];\r",
+              "const randomColor = colors[Math.floor(Math.random() * colors.length)];\r",
+              "\r",
+              "const dynamicName = \"test \" + randomNum;\r",
+              "const dynamicDescription = \"test Description \" + randomNum;\r",
+              "\r",
+              "pm.collectionVariables.set(\"expectedName\", dynamicName);\r",
+              "pm.collectionVariables.set(\"expectedColor\", randomColor);\r",
+              "pm.collectionVariables.set(\"expectedDescription\", dynamicDescription);\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "//в случае преувеличения лимита запросов на роут без авторизации\r",
+              "function isDailyLimitReached() {\r",
+              "    if (pm.response.code !== 405) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const responseText = pm.response.text();\r",
+              "\r",
+              "    if (!responseText) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const jsonData = pm.response.json();\r",
+              "\r",
+              "    return jsonData.error &&\r",
+              "        jsonData.error.includes(\"daily request limit\");\r",
+              "}\r",
+              "\r",
+              "if (isDailyLimitReached()) {\r",
+              "    pm.test(\"API limit: daily request limit reached\", function () {\r",
+              "        const jsonData = pm.response.json();\r",
+              "\r",
+              "        pm.expect(pm.response.code).to.eql(405);\r",
+              "        pm.expect(jsonData).to.have.property(\"error\");\r",
+              "        pm.expect(jsonData.error).to.include(\"daily request limit\");\r",
+              "    });\r",
+              "\r",
+              "    pm.execution.setNextRequest(null);\r",
+              "} else {\r",
+              "pm.test(\"POST: response is JSON\", function () {\r",
+              "    pm.response.to.have.header(\"Content-Type\");\r",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+              "    jsonData = pm.response.json();\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: status code is 200\", function () {\r",
+              "    pm.expect(pm.response.code).to.be.oneOf([200]);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: response body is object\", function () {\r",
+              "    pm.expect(jsonData).to.be.an(\"object\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: id exists and is string\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"id\");\r",
+              "    pm.expect(jsonData.id).to.be.a(\"string\").and.not.empty;\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: name matches request variable\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"name\");\r",
+              "    pm.expect(jsonData.name).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.name).to.eql(pm.collectionVariables.get(\"expectedName\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: data object exists\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"data\");\r",
+              "    pm.expect(jsonData.data).to.be.an(\"object\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: color matches request variable\", function () {\r",
+              "    pm.expect(jsonData.data).to.have.property(\"color\");\r",
+              "    pm.expect(jsonData.data.color).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.data.color).to.eql(pm.collectionVariables.get(\"expectedColor\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: description matches request variable\", function () {\r",
+              "    pm.expect(jsonData.data).to.have.property(\"description\");\r",
+              "    pm.expect(jsonData.data.description).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.data.description).to.eql(pm.collectionVariables.get(\"expectedDescription\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: createdAt exists\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"createdAt\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"POST: save created object id to collection variable\", function () {\r",
+              "    pm.collectionVariables.set(\"objectId\", jsonData.id);\r",
+              "    //console.log(\"Created objectId:\", jsonData.id);\r",
+              "});\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"{{expectedName}}\",\r\n  \"data\": {\r\n    \"color\": \"{{expectedColor}}\",\r\n    \"description\": \"{{expectedDescription}}\"\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": [
+            "{{baseUrl}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check creation Object",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "//в случае преувеличения лимита запросов на роут без авторизации\r",
+              "function isDailyLimitReached() {\r",
+              "    if (pm.response.code !== 405) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const responseText = pm.response.text();\r",
+              "\r",
+              "    if (!responseText) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const jsonData = pm.response.json();\r",
+              "\r",
+              "    return jsonData.error &&\r",
+              "        jsonData.error.includes(\"daily request limit\");\r",
+              "}\r",
+              "\r",
+              "if (isDailyLimitReached()) {\r",
+              "    pm.test(\"API limit: daily request limit reached\", function () {\r",
+              "        const jsonData = pm.response.json();\r",
+              "\r",
+              "        pm.expect(pm.response.code).to.eql(405);\r",
+              "        pm.expect(jsonData).to.have.property(\"error\");\r",
+              "        pm.expect(jsonData.error).to.include(\"daily request limit\");\r",
+              "    });\r",
+              "\r",
+              "    pm.execution.setNextRequest(null);\r",
+              "} else {\r",
+              "let jsonData;\r",
+              "\r",
+              "pm.test(\"GET created: response is JSON\", function () {\r",
+              "    pm.response.to.have.header(\"Content-Type\");\r",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+              "    jsonData = pm.response.json();\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: response body is object\", function () {\r",
+              "    pm.expect(jsonData).to.be.an(\"object\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: id matches saved objectId\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"id\");\r",
+              "    pm.expect(jsonData.id).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"objectId\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: name matches POST data\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"name\");\r",
+              "    pm.expect(jsonData.name).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.name).to.eql(pm.collectionVariables.get(\"expectedName\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: data is object\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"data\");\r",
+              "    pm.expect(jsonData.data).to.be.an(\"object\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: color matches POST data\", function () {\r",
+              "    pm.expect(jsonData.data).to.have.property(\"color\");\r",
+              "    pm.expect(jsonData.data.color).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.data.color).to.eql(pm.collectionVariables.get(\"expectedColor\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET created: description matches POST data\", function () {\r",
+              "    pm.expect(jsonData.data).to.have.property(\"description\");\r",
+              "    pm.expect(jsonData.data.description).to.be.a(\"string\");\r",
+              "    pm.expect(jsonData.data.description).to.eql(pm.collectionVariables.get(\"expectedDescription\"));\r",
+              "});\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/{{objectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "{{objectId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Object",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "//в случае преувеличения лимита запросов на роут без авторизации\r",
+              "function isDailyLimitReached() {\r",
+              "    if (pm.response.code !== 405) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const responseText = pm.response.text();\r",
+              "\r",
+              "    if (!responseText) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const jsonData = pm.response.json();\r",
+              "\r",
+              "    return jsonData.error &&\r",
+              "        jsonData.error.includes(\"daily request limit\");\r",
+              "}\r",
+              "\r",
+              "if (isDailyLimitReached()) {\r",
+              "    pm.test(\"API limit: daily request limit reached\", function () {\r",
+              "        const jsonData = pm.response.json();\r",
+              "\r",
+              "        pm.expect(pm.response.code).to.eql(405);\r",
+              "        pm.expect(jsonData).to.have.property(\"error\");\r",
+              "        pm.expect(jsonData.error).to.include(\"daily request limit\");\r",
+              "    });\r",
+              "\r",
+              "    pm.execution.setNextRequest(null);\r",
+              "} else {\r",
+              "let jsonData;\r",
+              "\r",
+              "pm.test(\"DELETE: status code is 200\", function () {\r",
+              "    pm.expect(pm.response.code).to.be.oneOf([200]);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"DELETE: response is valid if body exists\", function () {\r",
+              "    const responseText = pm.response.text().trim();\r",
+              "\r",
+              "    if (responseText.length > 0) {\r",
+              "        pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+              "\r",
+              "        jsonData = pm.response.json();\r",
+              "        pm.expect(jsonData).to.be.an(\"object\");\r",
+              "\r",
+              "        if (jsonData.message) {\r",
+              "            pm.expect(jsonData.message).to.be.a(\"string\");\r",
+              "            pm.expect(jsonData.message).to.include(pm.collectionVariables.get(\"objectId\"));\r",
+              "        }\r",
+              "    } else {\r",
+              "        pm.expect(responseText).to.eql(\"\");\r",
+              "    }\r",
+              "    });\r",
+              "\r",
+              "    pm.test(\"DELETE: message exists and is string\", function () {\r",
+              "    pm.expect(jsonData).to.have.property(\"message\");\r",
+              "    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"DELETE: message is correct\", function () {\r",
+              "    const objectId = pm.collectionVariables.get(\"objectId\");\r",
+              "    pm.expect(jsonData.message).to.eql(`Object with id = ${objectId} has been deleted.`);\r",
+              "});\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/{{objectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "{{objectId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check delete Object",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "//в случае преувеличения лимита запросов на роут без авторизации\r",
+              "function isDailyLimitReached() {\r",
+              "    if (pm.response.code !== 405) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const responseText = pm.response.text();\r",
+              "\r",
+              "    if (!responseText) {\r",
+              "        return false;\r",
+              "    }\r",
+              "\r",
+              "    const jsonData = pm.response.json();\r",
+              "\r",
+              "    return jsonData.error &&\r",
+              "        jsonData.error.includes(\"daily request limit\");\r",
+              "}\r",
+              "\r",
+              "if (isDailyLimitReached()) {\r",
+              "    pm.test(\"API limit: daily request limit reached\", function () {\r",
+              "        const jsonData = pm.response.json();\r",
+              "\r",
+              "        pm.expect(pm.response.code).to.eql(405);\r",
+              "        pm.expect(jsonData).to.have.property(\"error\");\r",
+              "        pm.expect(jsonData.error).to.include(\"daily request limit\");\r",
+              "    });\r",
+              "\r",
+              "    pm.execution.setNextRequest(null);\r",
+              "} else {\r",
+              "pm.test(\"GET after DELETE: status code is 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET after DELETE: deleted object is not returned\", function () {\r",
+              "    const responseText = pm.response.text().trim();\r",
+              "\r",
+              "    if (responseText.length > 0) {\r",
+              "        const jsonData = pm.response.json();\r",
+              "\r",
+              "        pm.expect(jsonData).to.be.an(\"object\");\r",
+              "\r",
+              "        pm.expect(jsonData).to.not.have.property(\"id\");\r",
+              "        pm.expect(jsonData).to.not.have.property(\"name\");\r",
+              "        pm.expect(jsonData).to.not.have.property(\"data\");\r",
+              "    } else {\r",
+              "        pm.expect(responseText).to.eql(\"\");\r",
+              "    }\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET after DELETE: error message is correct\", function () {\r",
+              "    const objectId = pm.collectionVariables.get(\"objectId\");\r",
+              "    pm.expect(jsonData.error).to.eql(`Object with id=${objectId} was not found.`);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"GET after DELETE: cleanup collection variable objectId\", function () {\r",
+              "    console.log(\"Deleted objectId:\", pm.collectionVariables.get(\"objectId\"));\r",
+              "    pm.collectionVariables.unset(\"objectId\");\r",
+              "});\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/{{objectId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "{{objectId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "dynamicName",
+      "value": ""
+    },
+    {
+      "key": "randomColor",
+      "value": ""
+    },
+    {
+      "key": "dynamicDescription",
+      "value": ""
+    },
+    {
+      "key": "expectedName",
+      "value": ""
+    },
+    {
+      "key": "expectedColor",
+      "value": ""
+    },
+    {
+      "key": "expectedDescription",
+      "value": ""
+    }
+  ]
+}
