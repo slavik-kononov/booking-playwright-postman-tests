@@ -64,6 +64,7 @@ jobs:
         run: |
           mkdir -p newman
           newman run postman/API_automation.postman_collection.json \
+            --env-var "baseUrl=https://api.restful-api.dev/objects" \
             --reporters cli,junit \
             --reporter-junit-export newman/postman-results.xml
 
