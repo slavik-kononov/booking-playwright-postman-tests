@@ -456,7 +456,7 @@
               "});\r",
               "\r",
               "pm.test(\"GET after DELETE: cleanup collection variable objectId\", function () {\r",
-              "    console.log(\"Deleted objectId:\", pm.collectionVariables.get(\"objectId\"));\r",
+              "    //console.log(\"Deleted objectId:\", pm.collectionVariables.get(\"objectId\"));\r",
               "    pm.collectionVariables.unset(\"objectId\");\r",
               "});\r",
               "}"
