@@ -247,7 +247,7 @@ test.describe.serial('Test cases W/O TC2,TC5 flow', () => {
 
         const currentUrl = page.url();
 
-        console.log(`✅ Pick-Up = ${await pickUpTime.inputValue()}, Drop-Off = ${await dropOffTime.inputValue()}`);
+        console.log(`✅ Pick-Up time= ${await pickUpTime.inputValue()}, Drop-Off time= ${await dropOffTime.inputValue()}`);
 
         await searchButton.click();
 
